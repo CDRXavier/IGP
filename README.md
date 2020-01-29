@@ -1,2 +1,0 @@
-# IGP
-Interactive Graphical Program
