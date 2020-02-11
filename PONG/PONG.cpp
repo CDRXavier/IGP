@@ -25,7 +25,8 @@ bool framePassed = false;
 unsigned int nextFrameStart;
 
 //function identifier
-LRESULT CALLBACK WindowProc(HWND, INT, WPARAM, LPARAM);
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK Control(HWND, UINT, WPARAM, LPARAM);
 int WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ int);

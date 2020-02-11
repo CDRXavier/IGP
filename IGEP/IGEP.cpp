@@ -57,22 +57,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//zero terminated string. Don't know why.
 	WNDCLASSEXW wcex = {};
 	//window class is now a EXW (extra?)
-	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_IGEP);
+	//wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_IGEP);
 	hInst = hInstance;
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_IGEP);
-
-
 	wcex.cbSize = sizeof(WNDCLASSEX);
-
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
-	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_IGEP));
-
-
-
+//	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_IGEP));
 	//pointer to application-definded function called the window procedure.
 	wcex.lpfnWndProc = WindowProc;
 	//handle to the application instance.
@@ -81,7 +75,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	wcex.lpszClassName = windowClassName;
 	//EXW type windows class supports additional icon!
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_IGEP));
-
 	//registers the windows class. Similarly, we are using the ExW variation.
 	RegisterClassExW(&wcex);
 
@@ -107,7 +100,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	ShowWindow(hwnd, nCmdShow);
 
 	//load accelerator table
-	HACCEL acceleratorTableHandle = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_IGEP));
+//	HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_IGEP));
 
 	//setting variables
 	setup(hwnd);
@@ -116,12 +109,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	MSG msg/* = {}*/;
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
-			if (!TranslateAccelerator(msg.hwnd, acceleratorTableHandle, &msg)) {
+			//if (!TranslateAccelerator(msg.hwnd, hAccel, &msg)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 				if (msg.message == WM_QUIT)
 					running = false;
-			}
+			//}
 		}
 		main(hwnd);
 	}
@@ -175,13 +168,13 @@ int main(HWND hwnd)
 		oldCoord[0] = coord[0];
 		oldCoord[1] = coord[1];
 
-		if ((isKeyDown(GetAsyncKeyState(0x57)) || isKeyDown(GetAsyncKeyState(VK_UP))) && (coord[1] > 0))
+		if ((isKeyDown(GetKeyState(0x57)) || isKeyDown(GetKeyState(VK_UP))) && (coord[1] > 0))
 			coord[1] = coord[1] - 4;//W
-		if ((isKeyDown(GetAsyncKeyState(0x41)) || isKeyDown(GetAsyncKeyState(VK_LEFT))) && (coord[0] > 0))
+		if ((isKeyDown(GetKeyState(0x41)) || isKeyDown(GetKeyState(VK_LEFT))) && (coord[0] > 0))
 			coord[0] = coord[0] - 4;//A
-		if ((isKeyDown(GetAsyncKeyState(0x53)) || isKeyDown(GetAsyncKeyState(VK_DOWN))) && (coord[1] < (winHeight - sqrSize)))
+		if ((isKeyDown(GetKeyState(0x53)) || isKeyDown(GetKeyState(VK_DOWN))) && (coord[1] < (winHeight - sqrSize)))
 			coord[1] = coord[1] + 4;//S
-		if ((isKeyDown(GetAsyncKeyState(0x44)) || isKeyDown(GetAsyncKeyState(VK_RIGHT))) && (coord[0] < (winWidth - sqrSize)))
+		if ((isKeyDown(GetKeyState(0x44)) || isKeyDown(GetKeyState(VK_RIGHT))) && (coord[0] < (winWidth - sqrSize)))
 			coord[0] = coord[0] + 4;//D
 
 		if ((oldCoord[0] != coord[0]) || (oldCoord[1] != coord[1]))
@@ -211,7 +204,7 @@ constexpr bool isKeyDown(SHORT keyState)
 
 int rangedRand(int min, int max)
 {
-	int u = (int)((double)rand() / (RAND_MAX + 1) * (max - min)) + min;
+	int u = (int)((double)rand() / (RAND_MAX) * (max - min)) + min;
 	return u;
 }
 

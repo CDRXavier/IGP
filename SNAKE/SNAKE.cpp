@@ -156,7 +156,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		PAINTSTRUCT ps;
 		//create hardware drawing contact (or whatever they call it)
 		HDC hdc = BeginPaint(hwnd, &ps);
-		//HBRUSH brush1 = CreateSolidBrush(RGB(100, 100, 100));
+		HBRUSH brush1 = CreateSolidBrush(RGB(100, 100, 100));
 		HBRUSH brush2 = CreateSolidBrush(RGB(150, 150, 150));
 		HBRUSH brush3 = CreateSolidBrush(RGB(0, 255, 0));
 		//create a "brush" to paint stuff
@@ -166,7 +166,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//set the dimension of the snake bodies
 			//SetRect(&body, snakeBody[i][0], snakeBody[i][1], snakeBody[i][0] + blockSize, snakeBody[i][1] + blockSize);
 			if (i < snakeLength - 1)
-				FillRect(hdc, &snakeBody[i], (HBRUSH)i);
+				FillRect(hdc, &snakeBody[i], brush1);
 			else 
 				FillRect(hdc, &snakeBody[i], brush2);
 			DrawFocusRect(hdc, &snakeBody[i]);
@@ -174,7 +174,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		FillRect(hdc, &food, brush3);
 		ReleaseDC(hwnd, hdc);
-		//DeleteObject(brush1);
+		DeleteObject(brush1);
 		DeleteObject(brush2);
 		DeleteObject(brush3);
 		EndPaint(hwnd, &ps);
