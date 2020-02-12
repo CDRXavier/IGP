@@ -356,7 +356,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SingleUser = true;
 			}
 			
-			SetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
+			SetMenuItemInfo(hmenu, IDM_ONEPLAYER, FALSE, &menuOneP);
 		break;
 		case IDM_DEMO:
 			GetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
