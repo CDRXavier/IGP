@@ -2,19 +2,15 @@
 // Microsoft Visual C++ generated include file.
 // Used by IGEP.rc
 
-#define IDR_MAINFRAME			128
-#define IDS_APP_TITLE			101
-#define IDD_IGEP_DIALOG			102
-#define IDD_ABOUTBOX			103
-#define IDM_ABOUT				104
-#define IDM_EXIT				105
-#define IDD_CTRLBOX				116
-#define IDM_CTRL				117
-
-#define IDI_IGEP				108
-#define IDC_IGEP				110
-#define IDC_MYICON				112
-
+#define IDS_APP_TITLE			100
+#define IDM_ABOUT				200
+#define IDM_EXIT				201
+#define IDM_CTRL				202
+#define IDD_IGEP_DIALOG			210
+#define IDD_ABOUTBOX			211
+#define IDD_CTRLBOX				212
+#define IDI_IGEP				300
+#define IDC_IGEP				400
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif

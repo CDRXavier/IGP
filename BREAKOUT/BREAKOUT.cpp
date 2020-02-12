@@ -44,8 +44,8 @@ BRICK bricks[ROWS][COLUMNS];
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-void main(HWND);
-void setup(HWND);
+int main(HWND);
+int setup(HWND);
 bool nextFrame(unsigned int);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -77,7 +77,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	RegisterClassExW(&wcex);
 	// Create the window.
 	//again, ExW window class.
-	HWND hwnd = CreateWindowExW(
+	HWND hWnd = CreateWindowExW(
 		0,															// Optional window styles.
 		szWindowClass,													// Window class
 		L"BREAKOUT",													// Window title
@@ -91,38 +91,34 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		NULL        // Additional application data
 	);
 
-	if (!hwnd)
+	if (!hWnd)
 	{
 		return 2;
 	}
-	ShowWindow(hwnd, nCmdShow);
-	//load accelerator table
-	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_BREAKOUT));
-	setup(hwnd);
+	ShowWindow(hWnd, nCmdShow);
+	setup(hWnd);
 	MSG msg;
 	// Main message loop:
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
-			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
-			}
 		}
-		main(hwnd);
+		main(hWnd);
 	}
 }
 
-void setup(HWND hwnd) {
+int setup(HWND hWnd) {
 	pedal.top = winHeight - 20;
 	pedal.bottom = pedal.top + 10;
 	pedal.left = (winWidth / 2) - 20;
 	pedal.right = pedal.left + pLength;
-	InvalidateRect(hwnd, &pedal, TRUE);
+	InvalidateRect(hWnd, &pedal, TRUE);
 	roundDot.top = winHeight / 2;
 	roundDot.bottom = roundDot.top + 10;
 	roundDot.left = winWidth / 2;
 	roundDot.right = roundDot.left + 10;
-	InvalidateRect(hwnd, &roundDot, TRUE);
+	InvalidateRect(hWnd, &roundDot, TRUE);
 	roundDotvy = 8;
 	running = true;
 	for (int row = 0; row < ROWS; row++) {
@@ -134,28 +130,29 @@ void setup(HWND hwnd) {
 			bricks[row][column].coord.bottom = bricks[row][column].coord.top + brickHeight;
 		}
 	}
+	return 0;
 }
 
-void main(HWND hwnd) {
+int main(HWND hWnd) {
 	if (nextFrame(20)) {
-		InvalidateRect(hwnd, &roundDot, TRUE);
+		InvalidateRect(hWnd, &roundDot, TRUE);
 		roundDot.top = roundDot.top + roundDotvy;
 		roundDot.left = roundDot.left + roundDotvx;
 		roundDot.bottom = roundDot.top + ballSize;
 		roundDot.right = roundDot.left + ballSize;
-		InvalidateRect(hwnd, &roundDot, TRUE);
+		InvalidateRect(hWnd, &roundDot, TRUE);
 
 		if ((0x8000 & GetAsyncKeyState(VK_LEFT)) != 0) {
-			InvalidateRect(hwnd, &pedal, TRUE);
+			InvalidateRect(hWnd, &pedal, TRUE);
 			pedal.left = pedal.left - 8;
 			pedal.right = pedal.left + pLength;
-			InvalidateRect(hwnd, &pedal, TRUE);
+			InvalidateRect(hWnd, &pedal, TRUE);
 		}
 		if ((0x8000 & GetAsyncKeyState(VK_RIGHT)) != 0) {
-			InvalidateRect(hwnd, &pedal, TRUE);
+			InvalidateRect(hWnd, &pedal, TRUE);
 			pedal.left = pedal.left + 8;
 			pedal.right = pedal.left + pLength;
-			InvalidateRect(hwnd, &pedal, TRUE);
+			InvalidateRect(hWnd, &pedal, TRUE);
 		}
 
 		if (roundDot.right > pedal.left&& roundDot.left < pedal.right && roundDot.bottom > pedal.top) {
@@ -176,7 +173,7 @@ void main(HWND hwnd) {
 			roundDot.left = roundDot.right - ballSize;
 			for (int row = 0; row < ROWS; row++) {
 				for (int column = 0; column < COLUMNS; column++) {
-					InvalidateRect(hwnd, &bricks[row][column].coord, TRUE);
+					InvalidateRect(hWnd, &bricks[row][column].coord, TRUE);
 				}
 			}
 		}
@@ -224,7 +221,7 @@ void main(HWND hwnd) {
 								bounce = false;
 							}
 						}
-						InvalidateRect(hwnd, &bricks[row][column].coord, TRUE);
+						InvalidateRect(hWnd, &bricks[row][column].coord, TRUE);
 					}
 
 
@@ -232,6 +229,7 @@ void main(HWND hwnd) {
 		
 		bounce = true;
 	}
+	return 0;
 }
 
 constexpr bool isKeyDown(SHORT keyState)
@@ -290,6 +288,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			running = false;
 			break;
+		case IDM_CTRL:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hWnd, About);
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -308,9 +309,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		HBRUSH purple = CreateSolidBrush(RGB(196, 0, 225));
 		HBRUSH indigo = CreateSolidBrush(RGB(128, 32, 225));
 		HBRUSH white = CreateSolidBrush(RGB(196, 196, 196));
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)0x00080808);
-		//0x01 0x0A 0x0B 0x0C light grey
-		//0x02 black
+		FillRect(hdc, &ps.rcPaint, (HBRUSH)0x0B);
+		//0x01 0x0B 0x0C light grey
+		//0x02 0x0A black
 		//0x03 light blue
 		//0x04 light blue gray
 		//0x05 very light grey

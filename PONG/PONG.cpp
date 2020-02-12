@@ -23,10 +23,11 @@ HBRUSH brush;
 HINSTANCE hInst;
 bool framePassed = false;
 unsigned int nextFrameStart;
+HMENU hmenu;
 
 //function identifier
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK Control(HWND, UINT, WPARAM, LPARAM);
 int WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ int);
@@ -100,7 +101,7 @@ int APIENTRY wWinMain(
 
 	// Create the window.
 	//again, ExW window class.
-	HWND hwnd = CreateWindowExW(
+	HWND hWnd = CreateWindowExW(
 		0,															// Optional window styles.
 		windowClassName,													// Window class
 		L"PONG",													// Window title
@@ -114,29 +115,30 @@ int APIENTRY wWinMain(
 		NULL        // Additional application data
 	);
 	//if window handle is unable to created (crash!!!)
-	if (!hwnd)
+	if (!hWnd)
 		return 2;
 	//draw the window.
-	ShowWindow(hwnd, nCmdShow);
+	ShowWindow(hWnd, nCmdShow);
 
-	//load accelerator table
-	HACCEL acceleratorTableHandle = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_PONG));
+	
+	hmenu = GetMenu(hWnd);
+	
 
-	//setting variables
-	setup(hwnd);
+	//runs setup once
+	setup(hWnd);
 
 	//The message loop.
 	MSG msg/* = {}*/;
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
-			if (!TranslateAccelerator(msg.hwnd, acceleratorTableHandle, &msg)) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-				if (msg.message == WM_QUIT)
-					running = false;
-			}
+			//if (!TranslateAccelerator(msg.hWnd, acceleratorTableHandle, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+				running = false;
+			//}
 		}
-		main(hwnd);
+		main(hWnd);
 	}
 	return 0;
 }
@@ -164,7 +166,7 @@ bool nextFrame(unsigned int rate) {
 	return framePassed;
 }
 
-int setup(HWND hwnd)
+int setup(HWND hWnd)
 {
 	//set the location of the square
 	pPedal.left = 10;
@@ -192,110 +194,108 @@ int setup(HWND hwnd)
 	//return to signal completion
 	return 0;
 }
-int main(HWND hwnd)
+int main(HWND hWnd)
 {
 	if (nextFrame(30)) {
 		//the nextFrame workes well (in eliminating unnecessary CPU usage), but the higher the framerate the more CPU it uses (doesn't make no sense)
 		//if pumping 60 fps, it will use about 10% of the CPU
-		InvalidateRect(hwnd, &roundDot, TRUE);
+		InvalidateRect(hWnd, &roundDot, TRUE);
 		roundDot.top = roundDot.top + roundDotvy;
 		roundDot.left = roundDot.left + roundDotvx;
 		roundDot.bottom = roundDot.top + ballSize;
 		roundDot.right = roundDot.left + ballSize;
-		InvalidateRect(hwnd, &roundDot, TRUE);
+		InvalidateRect(hWnd, &roundDot, TRUE);
 		if (isKeyDown(GetAsyncKeyState(0x57)) && (pPedal.top > 0) && !Demo) {
-			InvalidateRect(hwnd, &pPedal, TRUE);
+			InvalidateRect(hWnd, &pPedal, TRUE);
 			pPedal.top = pPedal.top - 4;
 			pPedal.bottom = pPedal.bottom - 4;
-			InvalidateRect(hwnd, &pPedal, TRUE);
+			InvalidateRect(hWnd, &pPedal, TRUE);
 		}
 
 		if (isKeyDown(GetAsyncKeyState(VK_UP)) && (cPedal.top > 0) && !SingleUser) {
-			InvalidateRect(hwnd, &cPedal, TRUE);
+			InvalidateRect(hWnd, &cPedal, TRUE);
 			cPedal.top = cPedal.top - 4;
 			cPedal.bottom = cPedal.bottom - 4;
-			InvalidateRect(hwnd, &cPedal, TRUE);
+			InvalidateRect(hWnd, &cPedal, TRUE);
 		}
 		if (Demo) {
 			if (pPedal.top > roundDot.top) {
-				InvalidateRect(hwnd, &pPedal, TRUE);
+				InvalidateRect(hWnd, &pPedal, TRUE);
 				pPedal.top = pPedal.top - 4;
 				pPedal.bottom = pPedal.bottom - 4;
-				InvalidateRect(hwnd, &pPedal, TRUE);
+				InvalidateRect(hWnd, &pPedal, TRUE);
 			}
 			if (pPedal.bottom < roundDot.bottom) {
-				InvalidateRect(hwnd, &pPedal, TRUE);
+				InvalidateRect(hWnd, &pPedal, TRUE);
 				pPedal.top = pPedal.top + 4;
 				pPedal.bottom = pPedal.bottom + 4;
-				InvalidateRect(hwnd, &pPedal, TRUE);
+				InvalidateRect(hWnd, &pPedal, TRUE);
 			}
 		}
-		if (isKeyDown(GetAsyncKeyState(0x57)) && isKeyDown(GetAsyncKeyState(0x53))) Demo = !Demo;
+		
 		//W
 		//if ((isKeyDown(GetAsyncKeyState(0x41)) || isKeyDown(GetAsyncKeyState(VK_LEFT))) && (coord[0] > 0))
 		//	coord[0] = coord[0] - 4;//A
 		if (isKeyDown(GetAsyncKeyState(0x53)) && (pPedal.bottom < winHeight) && !Demo)
 		{
-			InvalidateRect(hwnd, &pPedal, TRUE);
+			InvalidateRect(hWnd, &pPedal, TRUE);
 			pPedal.top = pPedal.top + 4;
 			pPedal.bottom = pPedal.bottom + 4;
-			InvalidateRect(hwnd, &pPedal, TRUE);
+			InvalidateRect(hWnd, &pPedal, TRUE);
 		}
 		if (isKeyDown(GetAsyncKeyState(VK_DOWN)) && (cPedal.bottom < winHeight) && !SingleUser)
 		{
-			InvalidateRect(hwnd, &cPedal, TRUE);
+			InvalidateRect(hWnd, &cPedal, TRUE);
 			cPedal.top = cPedal.top + 4;
 			cPedal.bottom = cPedal.bottom + 4;
-			InvalidateRect(hwnd, &cPedal, TRUE);
+			InvalidateRect(hWnd, &cPedal, TRUE);
 		}
 		if (SingleUser) {
 			if (cPedal.top > roundDot.top) {
-				InvalidateRect(hwnd, &cPedal, TRUE);
+				InvalidateRect(hWnd, &cPedal, TRUE);
 				cPedal.top = cPedal.top - 4;
 				cPedal.bottom = cPedal.bottom - 4;
-				InvalidateRect(hwnd, &cPedal, TRUE);
+				InvalidateRect(hWnd, &cPedal, TRUE);
 			}
 			if (cPedal.bottom < roundDot.bottom) {
-				InvalidateRect(hwnd, &cPedal, TRUE);
+				InvalidateRect(hWnd, &cPedal, TRUE);
 				cPedal.top = cPedal.top + 4;
 				cPedal.bottom = cPedal.bottom + 4;
-				InvalidateRect(hwnd, &cPedal, TRUE);
+				InvalidateRect(hWnd, &cPedal, TRUE);
 			}
 		}
-		if (isKeyDown(GetAsyncKeyState(VK_UP)) && isKeyDown(GetAsyncKeyState(VK_DOWN))) {
-			SingleUser = !SingleUser;
+		
+		if (roundDot.left < 0) {
+			roundDotvx = -roundDotvx;
+			roundDot.left = 0;
+			roundDot.right = roundDot.left + ballSize;
 		}
-				if (roundDot.left < 0) {
-					roundDotvx = -roundDotvx;
-					roundDot.left = 0;
-					roundDot.right = roundDot.left + ballSize;
-				}
-				if (roundDot.right > winWidth) {
-					roundDotvx = -roundDotvx;
-					roundDot.right = winWidth;
-					roundDot.left = roundDot.right - ballSize;
-				}
-				if (roundDot.top < 0) {
-					roundDotvy = -roundDotvy;
-					roundDot.top = 0;
-					roundDot.bottom = roundDot.top + ballSize;
-				}
-				if (roundDot.bottom > winHeight) {
-					roundDotvy = -roundDotvy;
-					roundDot.bottom = winHeight;
-					roundDot.top = roundDot.bottom - ballSize;
-				}
+		if (roundDot.right > winWidth) {
+			roundDotvx = -roundDotvx;
+			roundDot.right = winWidth;
+			roundDot.left = roundDot.right - ballSize;
+		}
+		if (roundDot.top < 0) {
+			roundDotvy = -roundDotvy;
+			roundDot.top = 0;
+			roundDot.bottom = roundDot.top + ballSize;
+		}
+		if (roundDot.bottom > winHeight) {
+			roundDotvy = -roundDotvy;
+			roundDot.bottom = winHeight;
+			roundDot.top = roundDot.bottom - ballSize;
+		}
 		if (roundDot.left < pPedal.right && roundDot.top < pPedal.bottom && roundDot.bottom > pPedal.top) {
 			roundDotvx = -roundDotvx;
-			roundDotvy = roundDotvy - float(roundDot.top - pPedal.top - pLength / 2) / 4;
+			roundDotvy = roundDotvy + float(roundDot.top - pPedal.top - pLength / 2) / 4;
 		}
-		if (roundDot.right > cPedal.left && roundDot.top < cPedal.bottom && roundDot.bottom > cPedal.top) {
+		if (roundDot.right > cPedal.left&& roundDot.top < cPedal.bottom && roundDot.bottom > cPedal.top) {
 			roundDotvx = -roundDotvx;
-			roundDotvy = roundDotvy - float(roundDot.top - cPedal.top - pLength / 2) / 4;
+			roundDotvy = roundDotvy + float(roundDot.top - cPedal.top - pLength / 2) / 4;
 		}
 		if (roundDotvy > 12) roundDotvy = roundDotvy = 12;
 		if (roundDotvy < -12) roundDotvy = roundDotvy = -12;
-		
+
 		//S
 	//if ((isKeyDown(GetAsyncKeyState(0x44)) || isKeyDown(GetAsyncKeyState(VK_RIGHT))) && (coord[0] < (winWidth - sqrSize)))
 	//	coord[0] = coord[0] + 4;//D
@@ -304,8 +304,8 @@ int main(HWND hwnd)
 	}
 }
 
-constexpr bool isKeyDown(SHORT keyState)
-{
+constexpr bool isKeyDown(
+	SHORT keyState) {
 	return ((keyState & 0x8000) != 0);
 }
 
@@ -319,7 +319,7 @@ constexpr bool isKeyDown(SHORT keyState)
 
 //the DispatchMessage function will call this function
 //the window procedure of the window that is the target of the message.
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //HWND is the handle
 //uMsg is the message code
 //WPARAM and LPARAM are additional data to the message
@@ -328,25 +328,58 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 		//from the menu selections, the WM_COMMAND is sent
 	case WM_COMMAND: {
+		
+		//GetMenuItemInfo(HMENU, UINT, fByPosition, LPMENUITEMINFOW);
 		int wmId = LOWORD(wParam);
+		MENUITEMINFO menuDemo = { 0 };
+		MENUITEMINFO menuOneP = { 0 };
+		menuDemo.fMask = MIIM_STATE;
+		menuOneP.fMask = MIIM_STATE;
+		menuDemo.cbSize = sizeof(MENUITEMINFO);
+		menuOneP.cbSize = sizeof(MENUITEMINFO);
 		// Parse the menu selections:
 		switch (wmId) {
 		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, About);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
-			//case IDM_CTRL:
-			//	DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hwnd, Control);
-			//	break;
+		case IDM_CTRL:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hWnd, Control);
+			break;
+		case IDM_ONEPLAYER:
+			GetMenuItemInfo(hmenu, IDM_ONEPLAYER, FALSE, &menuOneP);
+			if (menuOneP.fState == MFS_CHECKED) {
+				menuOneP.fState = MFS_UNCHECKED;
+				SingleUser = false;
+			}
+			else {
+				menuOneP.fState = MFS_CHECKED;
+				SingleUser = true;
+			}
+			
+			SetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
+		break;
+		case IDM_DEMO:
+			GetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
+			if (menuDemo.fState == MFS_CHECKED) {
+				menuDemo.fState = MFS_UNCHECKED;
+				Demo = false;
+			}
+			else {
+				menuDemo.fState = MFS_CHECKED;
+				Demo = true;
+			}
+			SetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
+			break;
 		case IDM_EXIT:
-			DestroyWindow(hwnd);
+			DestroyWindow(hWnd);
 			break;
 		default:
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 	}
-				   return 0;
+		return 0;
 	case WM_CLOSE:
-		DestroyWindow(hwnd);
+		DestroyWindow(hWnd);
 		running = false;
 		return 0;
 	case WM_DESTROY:
@@ -357,7 +390,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//initialize PAINTSTRUCT here
 		PAINTSTRUCT ps;
 		//Handle Device Context
-		HDC hdc = BeginPaint(hwnd, &ps);
+		HDC hdc = BeginPaint(hWnd, &ps);
 		//create a "brush" to paint stuff
 		//the background
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)6);
@@ -371,12 +404,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		FillRect(hdc, &pPedal, brush1);
 		FillRect(hdc, &cPedal, brush1);
 		FillRect(hdc, &roundDot, brush2);
-		
+
 		DeleteDC(hdc);
 		DeleteObject(brush1);
 		DeleteObject(brush2);
-		
-		EndPaint(hwnd, &ps);
+
+		EndPaint(hWnd, &ps);
 		//these are not deleting the hdc properly. don't know what to say ...
 	}
 				 return 0;
@@ -384,7 +417,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEACTIVATE:
 		return 0;
 	default:
-		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 }
 

@@ -1,18 +1,17 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by SNAKE.rc
+#define IDR_MAINFRAME			0
+#define IDC_SNAKE				100
+#define IDS_APP_TITLE			110
+#define IDM_CTRL				200
+#define IDM_ABOUT				201
+#define IDM_EXIT				202
+#define IDD_SNAKE_DIALOG		210
+#define IDD_ABOUTBOX			211
+#define IDD_CTRLBOX				212
+#define IDI_SNAKE				107
 
-#define IDS_APP_TITLE			103
-
-#define IDR_MAINFRAME			128
-#define IDD_SNAKE_DIALOG	102
-#define IDD_ABOUTBOX			103
-#define IDM_ABOUT				104
-#define IDM_EXIT				105
-#define IDI_SNAKE			107
-#define IDI_SMALL				108
-#define IDC_SNAKE			109
-#define IDC_MYICON				2
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif

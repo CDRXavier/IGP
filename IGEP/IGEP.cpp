@@ -30,7 +30,10 @@ unsigned int nextFrameStart;
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK Control(HWND, UINT, WPARAM, LPARAM);
-int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int);
+int APIENTRY wWinMain(_In_ HINSTANCE,
+	_In_opt_ HINSTANCE,
+	_In_ PWSTR,
+	_In_ int);
 //don't worry about inconsistent annotation. It's custom-made, after all.
 constexpr bool isKeyDown(SHORT);
 int rangedRand(int, int);
@@ -42,11 +45,8 @@ bool nextFrame(unsigned int);
 //entry point function
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ PWSTR    pCmdLine,
-	_In_ int       nCmdShow)
-
-
-//int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow)
+	_In_ PWSTR pCmdLine,
+	_In_ int nCmdShow)
 {
 	//initialize global strings.
 	LoadStringW(hInstance, IDS_APP_TITLE, titleString, maxStringLength);
@@ -80,7 +80,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// Create the window.
 	//again, ExW window class.
-	HWND hwnd = CreateWindowExW(
+	HWND hWnd = CreateWindowExW(
 		0,															// Optional window styles.
 		windowClassName,													// Window class
 		L"IGEP",													// Window title
@@ -94,29 +94,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		NULL        // Additional application data
 	);
 	//if window handle is unable to created (crash!!!)
-	if (!hwnd)
+	if (!hWnd)
 		return 2;
 	//draw the window.
-	ShowWindow(hwnd, nCmdShow);
+	ShowWindow(hWnd, nCmdShow);
 
 	//load accelerator table
 //	HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_IGEP));
 
 	//setting variables
-	setup(hwnd);
+	setup(hWnd);
 
 	//The message loop.
 	MSG msg/* = {}*/;
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
-			//if (!TranslateAccelerator(msg.hwnd, hAccel, &msg)) {
+			//if (!TranslateAccelerator(msg.hWnd, hAccel, &msg)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 				if (msg.message == WM_QUIT)
 					running = false;
 			//}
 		}
-		main(hwnd);
+		main(hWnd);
 	}
 	return 0;
 }
@@ -146,7 +146,7 @@ bool nextFrame(unsigned int rate) {
 
 
 
-int setup(HWND hwnd) {
+int setup(HWND hWnd) {
 	//set the location of the square
 	coord[0] = 20;
 	coord[1] = 20;
@@ -159,7 +159,7 @@ int setup(HWND hwnd) {
 	//return to signal completion
 	return 0;
 }
-int main(HWND hwnd)
+int main(HWND hWnd)
 {
 	if (nextFrame(30)) {
 		//the nextFrame workes well (in eliminating unnecessary CPU usage), but the higher the framerate the more CPU it uses (doesn't make no sense)
@@ -179,19 +179,19 @@ int main(HWND hwnd)
 
 		if ((oldCoord[0] != coord[0]) || (oldCoord[1] != coord[1]))
 		{
-			HWND hwnd = GetActiveWindow();
-			InvalidateRect(hwnd, &square, TRUE);
+			HWND hWnd = GetActiveWindow();
+			InvalidateRect(hWnd, &square, TRUE);
 			SetRect(&square, coord[0], coord[1], coord[0] + sqrSize, coord[1] + sqrSize);
-			InvalidateRect(hwnd, &square, TRUE);
+			InvalidateRect(hWnd, &square, TRUE);
 			if ((abs(coord[0] - food[0]) < 20) && (abs(coord[1] - food[1]) < sqrSize) &&
 				(abs(coord[0] - food[0]) + abs(coord[1] - food[1]) < 1.3 * sqrSize)) {
 				//food[1] = food[1] + 20;
 				food[0] = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
 				food[1] = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
-				InvalidateRect(hwnd, &roundDot, TRUE);
+				InvalidateRect(hWnd, &roundDot, TRUE);
 			}
 			SetRect(&roundDot, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
-			InvalidateRect(hwnd, &roundDot, TRUE);
+			InvalidateRect(hWnd, &roundDot, TRUE);
 		}
 		return 0;
 	}
@@ -212,7 +212,7 @@ int rangedRand(int min, int max)
 
 //the DispatchMessage function will call this function
 //the window procedure of the window that is the target of the message.
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //HWND is the handle
 //uMsg is the message code
 //WPARAM and LPARAM are additional data to the message
@@ -225,21 +225,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Parse the menu selections:
 		switch (wmId) {
 		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, About);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_CTRL:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hwnd, Control);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hWnd, Control);
 			break;
 		case IDM_EXIT:
-			DestroyWindow(hwnd);
+			DestroyWindow(hWnd);
 			break;
 		default:
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 	}
 				   break;
 	case WM_CLOSE:
-		DestroyWindow(hwnd);
+		DestroyWindow(hWnd);
 		running = false;
 		return 0;
 	case WM_DESTROY:
@@ -250,7 +250,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//initialize PAINTSTRUCT here
 		PAINTSTRUCT ps;
 		//Handle Device Context
-		HDC hdc = BeginPaint(hwnd, &ps);
+		HDC hdc = BeginPaint(hWnd, &ps);
 		//create a "brush" to paint stuff
 		//the background
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)6);
@@ -258,7 +258,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		FillRect(hdc, &square, brush);
 		//the food
 		Ellipse(hdc, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
-		EndPaint(hwnd, &ps);
+		EndPaint(hWnd, &ps);
 	}
 				 return 0;
 	case WM_LBUTTONUP:
@@ -271,11 +271,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//compare mouse coordinate with the boarder of the square
 		if (mouseX > coord[0] && mouseX < (sqrSize + coord[0]) && mouseY > coord[1] && mouseY < (sqrSize + coord[1])) {
 			brush = CreateSolidBrush(RGB(75, 75, 75));
-			InvalidateRect(hwnd, &square, TRUE);
+			InvalidateRect(hWnd, &square, TRUE);
 		}
 		else {
 			brush = CreateSolidBrush(RGB(100, 100, 100));
-			InvalidateRect(hwnd, &square, TRUE);
+			InvalidateRect(hWnd, &square, TRUE);
 		}
 		return 0;
 
@@ -284,17 +284,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		mouseY = ((int)(short)HIWORD(lParam));
 
 		if (mouseX > coord[0] && mouseX < (sqrSize + coord[0]) && mouseY > coord[1] && mouseY < (sqrSize + coord[1])) {
-			InvalidateRect(hwnd, &roundDot, TRUE);
+			InvalidateRect(hWnd, &roundDot, TRUE);
 			food[0] = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
 			food[1] = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
 			SetRect(&roundDot, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
-			InvalidateRect(hwnd, &roundDot, TRUE);
-			InvalidateRect(hwnd, &square, TRUE);
+			InvalidateRect(hWnd, &roundDot, TRUE);
+			InvalidateRect(hWnd, &square, TRUE);
 			brush = CreateSolidBrush(RGB(0, 0, 0));
 		}
 		return 0;
 	}
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

@@ -49,7 +49,7 @@ int WINAPI wWinMain(
 	resetGame();
 	// Create the window.
 
-	HWND hwnd = CreateWindowEx(
+	HWND hWnd = CreateWindowEx(
 		0,                              // Optional window styles.
 		CLASS_NAME,                     // Window class
 		L"WindowsProject",              // Window title
@@ -64,10 +64,10 @@ int WINAPI wWinMain(
 		NULL        // Additional application data
 	);
 
-	if (hwnd == NULL)
+	if (hWnd == NULL)
 		return 0;
 	//draw the window.
-	ShowWindow(hwnd, nCmdShow);
+	ShowWindow(hWnd, nCmdShow);
 
 	// Run the message loop.
 	MSG msg = {};
@@ -133,7 +133,7 @@ int rangedRand(int min, int max)
 
 //the DispatchMessage function will call this function
 //the window procedure of the window that is the target of the message.
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //HWND is the handle
 //uMsg is the message code
 //WPARAM and LPARAM are additional data to the message
@@ -142,8 +142,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg) {
 	case WM_CLOSE:
-		//if (MessageBox(hwnd, L"Really quit?", L"My application", MB_OKCANCEL) == IDOK)
-		DestroyWindow(hwnd);
+		//if (MessageBox(hWnd, L"Really quit?", L"My application", MB_OKCANCEL) == IDOK)
+		DestroyWindow(hWnd);
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -155,7 +155,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//initialize PAINTSTRUCT here	
 		PAINTSTRUCT ps;
 		//create hardware drawing contact (or whatever they call it)
-		HDC hdc = BeginPaint(hwnd, &ps);
+		HDC hdc = BeginPaint(hWnd, &ps);
 		HBRUSH brush1 = CreateSolidBrush(RGB(100, 100, 100));
 		HBRUSH brush2 = CreateSolidBrush(RGB(150, 150, 150));
 		HBRUSH brush3 = CreateSolidBrush(RGB(0, 255, 0));
@@ -173,11 +173,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			
 		}
 		FillRect(hdc, &food, brush3);
-		ReleaseDC(hwnd, hdc);
+		ReleaseDC(hWnd, hdc);
 		DeleteObject(brush1);
 		DeleteObject(brush2);
 		DeleteObject(brush3);
-		EndPaint(hwnd, &ps);
+		EndPaint(hWnd, &ps);
 	}
 	return 0;
 
@@ -186,7 +186,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//we'll just ASSUME it's the right key. enough condition crap.
 		//so you can't ASSUME it's right because it does nonsense
 		for (int i = 0; i < snakeLength - 1; i++)
-			InvalidateRect(hwnd, &snakeBody[i], TRUE);
+			InvalidateRect(hWnd, &snakeBody[i], TRUE);
 		switch (wParam) {
 		case 0x57: // w key
 		case VK_UP:
@@ -230,16 +230,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		for (int i = 0; i < snakeLength; ++i) {
-			InvalidateRect(hwnd, &snakeBody[i], TRUE);
+			InvalidateRect(hWnd, &snakeBody[i], TRUE);
 			if (food.left == snakeBody[i].left && food.top == snakeBody[i].top) {
 				snakeBody[snakeLength].left = food.left;
 				snakeBody[snakeLength].top = food.top;
 				snakeBody[snakeLength].right = snakeBody[snakeLength].left + blockSize;
 				snakeBody[snakeLength].bottom = snakeBody[snakeLength].top + blockSize;
 				snakeLength = snakeLength + 1;
-				InvalidateRect(hwnd, &food, TRUE);
+				InvalidateRect(hWnd, &food, TRUE);
 				createFood();
-				InvalidateRect(hwnd, &food, TRUE);
+				InvalidateRect(hWnd, &food, TRUE);
 			}
 		}
 		return 0;
@@ -247,5 +247,5 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 	//default action toward messages
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
