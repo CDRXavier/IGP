@@ -7,24 +7,24 @@
 #define MAX_LOADSTRING 100
 
 // Global Variables:
-HINSTANCE hInst;                                // current instance
+HINSTANCE hInst;                                // handle to current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-constexpr int winWidth = 400;
-constexpr int winHeight = 250;
-constexpr int ballSize = 5;
-constexpr int pLength = 40;
-constexpr int ROWS = 15;
-constexpr int COLUMNS = 5;
-constexpr int brickWidth = 25;
-constexpr int brickHeight = 10;
-int score = 0;
-//global variables
+#define winWidth 520
+#define winHeight 340
+#define ballSize 5
+#define COLUMNS 18
+#define ROWS 6
+#define brickWidth 26
+#define brickHeight 10
+#define brdBnd 26
 //int mouseX, mouseY;
 //RECT square;
 //int coord[2];
 //bool keyState[8];
 //int food[2];
+int score;
+int pLength;
 bool running;
 bool framePassed = false;
 unsigned int nextFrameStart;
@@ -33,16 +33,24 @@ int roundDotvx;
 int roundDotvy;
 RECT pedal;
 RECT roundDot;
+RECT scoreBox;
+RECT leftBrd;
+RECT rightBrd;
+RECT topBrd;
+struct keystate {
+	bool left;
+	bool right;
+};
+keystate STDKey;
 class BRICK {
-
 public:
 	bool collision;
 	RECT coord;
 };
-BRICK bricks[ROWS][COLUMNS];
+BRICK bricks[COLUMNS][ROWS];
 
 // Forward declarations of functions included in this code module:
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK    WndProc(_In_ HWND, _In_opt_ UINT, _In_ WPARAM, _In_ LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 int main(HWND);
 int setup(HWND);
@@ -93,7 +101,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	if (!hWnd)
 	{
-		return 2;
+		return -2;
 	}
 	ShowWindow(hWnd, nCmdShow);
 	setup(hWnd);
@@ -101,16 +109,30 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// Main message loop:
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
 		main(hWnd);
 	}
+	return 0;
 }
 
 int setup(HWND hWnd) {
+	leftBrd.top = 0;
+	leftBrd.bottom = winHeight;
+	leftBrd.left = 0;
+	leftBrd.right = brdBnd;
+	rightBrd.top = 0;
+	rightBrd.bottom = winHeight;
+	rightBrd.left = winWidth - brdBnd;
+	rightBrd.right = winWidth;
+	topBrd.top = 0;
+	topBrd.bottom = brdBnd;
+	topBrd.left = 0;
+	topBrd.right = winWidth;
+	pLength = 40;
 	pedal.top = winHeight - 20;
-	pedal.bottom = pedal.top + 10;
+	pedal.bottom = pedal.top + 8;
 	pedal.left = (winWidth / 2) - 20;
 	pedal.right = pedal.left + pLength;
 	InvalidateRect(hWnd, &pedal, TRUE);
@@ -119,122 +141,107 @@ int setup(HWND hWnd) {
 	roundDot.left = winWidth / 2;
 	roundDot.right = roundDot.left + 10;
 	InvalidateRect(hWnd, &roundDot, TRUE);
-	roundDotvy = 8;
+	roundDotvy = 4;
+	scoreBox.top = 0;
+	scoreBox.bottom = 26;
+	scoreBox.left = 200;
+	scoreBox.right = 300;
 	running = true;
-	for (int row = 0; row < ROWS; row++) {
-		for (int column = 0; column < COLUMNS; column++) {
-			bricks[row][column].collision = true;
-			bricks[row][column].coord.left = 20 + brickWidth * row;
-			bricks[row][column].coord.right = bricks[row][column].coord.left + brickWidth;
-			bricks[row][column].coord.top = 20 + brickHeight * column;
-			bricks[row][column].coord.bottom = bricks[row][column].coord.top + brickHeight;
+	score = 0;
+
+	for (int column = 0; column < COLUMNS; column++)
+		for (int row = 0; row < ROWS; row++) {
+			bricks[column][row].collision = true;
+			bricks[column][row].coord.left = brdBnd + brickWidth * column;
+			bricks[column][row].coord.right = bricks[column][row].coord.left + brickWidth;
+			bricks[column][row].coord.top = brdBnd + brdBnd + brickHeight * row;
+			bricks[column][row].coord.bottom = bricks[column][row].coord.top + brickHeight;
 		}
-	}
 	return 0;
 }
 
 int main(HWND hWnd) {
-	if (nextFrame(20)) {
+	if (nextFrame(30)) {
 		InvalidateRect(hWnd, &roundDot, TRUE);
 		roundDot.top = roundDot.top + roundDotvy;
 		roundDot.left = roundDot.left + roundDotvx;
 		roundDot.bottom = roundDot.top + ballSize;
 		roundDot.right = roundDot.left + ballSize;
-		InvalidateRect(hWnd, &roundDot, TRUE);
-
-		if ((0x8000 & GetAsyncKeyState(VK_LEFT)) != 0) {
+		if (STDKey.left) {
 			InvalidateRect(hWnd, &pedal, TRUE);
 			pedal.left = pedal.left - 8;
 			pedal.right = pedal.left + pLength;
-			InvalidateRect(hWnd, &pedal, TRUE);
 		}
-		if ((0x8000 & GetAsyncKeyState(VK_RIGHT)) != 0) {
+		if (STDKey.right) {
 			InvalidateRect(hWnd, &pedal, TRUE);
 			pedal.left = pedal.left + 8;
 			pedal.right = pedal.left + pLength;
-			InvalidateRect(hWnd, &pedal, TRUE);
+			
 		}
 
 		if (roundDot.right > pedal.left&& roundDot.left < pedal.right && roundDot.bottom > pedal.top) {
-			roundDotvy = -roundDotvy;
-			roundDotvx = roundDotvx - (float(roundDot.left) - float(pedal.left) - float(pLength) / 2) / 3.0f;
+			roundDotvy = -4;
+			roundDotvx = roundDotvx + (int)(float(roundDot.left) - float(pedal.left) - float(pLength) / 2) / 4.0f;
+			if (roundDotvx == 0) roundDotvx = (rand() > 0) ? 1 : -1;
 		}
-		if (roundDotvx > 12) roundDotvx = roundDotvx = 12;
-		if (roundDotvx < -12) roundDotvx = roundDotvx = -12;
+		if (roundDotvx > 8) roundDotvx = roundDotvx = 8;
+		if (roundDotvx < -8) roundDotvx = roundDotvx = -8;
 
-		if (roundDot.left < 0) {
+		if (roundDot.left < brdBnd)
 			roundDotvx = -roundDotvx;
-			roundDot.left = 0;
-			roundDot.right = roundDot.left + ballSize;
-		}
-		if (roundDot.right > winWidth) {
+		
+		if (roundDot.right > winWidth - brdBnd)
 			roundDotvx = -roundDotvx;
-			roundDot.right = winWidth;
-			roundDot.left = roundDot.right - ballSize;
-			for (int row = 0; row < ROWS; row++) {
-				for (int column = 0; column < COLUMNS; column++) {
-					InvalidateRect(hWnd, &bricks[row][column].coord, TRUE);
-				}
-			}
-		}
-		if (roundDot.top < 0) {
+		if (roundDot.top < 0) 
 			roundDotvy = -roundDotvy;
-			roundDot.top = 0;
-			roundDot.bottom = roundDot.top + ballSize;
-		}
-		if (roundDot.bottom > winHeight) {
+		
+		if (roundDot.bottom > winHeight) 
 			roundDotvy = -roundDotvy;
-			roundDot.bottom = winHeight;
-			roundDot.top = roundDot.bottom - ballSize;
-		}
+		
 
 
 		//Bounce off Bricks
-		for (int row = 0; row < ROWS; row++)
-			for (int column = 0; column < COLUMNS; column++)
-				if (bricks[row][column].collision) {
-					if (roundDot.right > bricks[row][column].coord.left&&
-						roundDot.top < bricks[row][column].coord.bottom &&
-						roundDot.left < bricks[row][column].coord.right &&
-						roundDot.bottom > bricks[row][column].coord.top) {
+		for (int column = 0; column < COLUMNS; column++)
+			for (int row = 0; row < ROWS; row++)
+				if (bricks[column][row].collision) {
+					if (roundDot.right > bricks[column][row].coord.left&&
+						roundDot.top < bricks[column][row].coord.bottom &&
+						roundDot.left < bricks[column][row].coord.right &&
+						roundDot.bottom > bricks[column][row].coord.top) {
 						switch (row) {
 						case 7: case 6: score = score + 1; break;
 						case 5: case 4: score = score + 3; break;
 						case 3: case 2: score = score + 5; break;
-						case 1: case 0: score = score + 7; break;
+						case 1: case 0: score = score + 7; 
+							pLength = 25;  break;
 						}
-						bricks[row][column].collision = false;
+						bricks[column][row].collision = false;
 						//Vertical collision
-						if (roundDot.top < bricks[row][column].coord.bottom || roundDot.bottom > bricks[row][column].coord.top) {
+						if (roundDot.top < bricks[column][row].coord.bottom || roundDot.bottom > bricks[column][row].coord.top) {
 							//Only bounce once each ball move
 							if (bounce) {
 								roundDotvy = -roundDotvy;
 								bounce = false;
-
 							}
 						}
 						//Hoizontal collision
-						else if (roundDot.right > bricks[row][column].coord.left || roundDot.left < bricks[row][column].coord.right) {
+						if (roundDot.right > bricks[column][row].coord.left || roundDot.left < bricks[column][row].coord.right) {
 							//Only bounce once brick each ball move
 							if (bounce) {
 								roundDotvx = -roundDotvx;
 								bounce = false;
 							}
 						}
-						InvalidateRect(hWnd, &bricks[row][column].coord, TRUE);
+						InvalidateRect(hWnd, &bricks[column][row].coord, TRUE);
 					}
-
-
 				}
-		
+		InvalidateRect(hWnd, &roundDot, TRUE);
+		InvalidateRect(hWnd, &pedal, TRUE);
+		InvalidateRect(hWnd, &scoreBox, TRUE);
 		bounce = true;
 	}
+	
 	return 0;
-}
-
-constexpr bool isKeyDown(SHORT keyState)
-{
-	return ((keyState & 0x8000) != 0);
 }
 
 bool nextFrame(unsigned int rate) {
@@ -284,13 +291,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
+		case IDM_CTRL:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hWnd, About);
+			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			running = false;
 			break;
-		case IDM_CTRL:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_CTRLBOX), hWnd, About);
-
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -300,16 +307,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
-		HBRUSH brush = CreateSolidBrush(RGB(20, 20, 20));
-		HBRUSH red = CreateSolidBrush(RGB(237, 28, 36));
-		HBRUSH orange = CreateSolidBrush(RGB(225, 128, 64));
-		HBRUSH yellow = CreateSolidBrush(RGB(225, 225, 32));
-		HBRUSH green = CreateSolidBrush(RGB(32, 225, 32));
-		HBRUSH blue = CreateSolidBrush(RGB(64, 128, 225));
-		HBRUSH purple = CreateSolidBrush(RGB(196, 0, 225));
+		//HFONT hFont = CreateFontA(16, 40, 0, 0, 800, false, false, false, ANSI_CHARSET, OUT_RASTER_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH, 0);
+		HBRUSH backg = CreateSolidBrush(0x00202020);
+		HBRUSH red = CreateSolidBrush(RGB(200, 72, 72));
+		HBRUSH orange = CreateSolidBrush(RGB(192, 108, 58));
+		HBRUSH beige = CreateSolidBrush(RGB(180, 121, 48));
+		HBRUSH yellow = CreateSolidBrush(RGB(164, 162, 41));
+		HBRUSH green = CreateSolidBrush(RGB(72, 159, 72));
+		HBRUSH blue = CreateSolidBrush(RGB(66, 72, 199));
 		HBRUSH indigo = CreateSolidBrush(RGB(128, 32, 225));
-		HBRUSH white = CreateSolidBrush(RGB(196, 196, 196));
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)0x0B);
+		//HBRUSH white = CreateSolidBrush(RGB(196, 196, 196));
+		FillRect(hdc, &ps.rcPaint, backg);
+		FillRect(hdc, &topBrd, (HBRUSH)0x0B);
+		FillRect(hdc, &leftBrd, (HBRUSH)0x0B);
+		FillRect(hdc, &rightBrd, (HBRUSH)0x0B);
+		//FillRect(hdc, &scoreBox, (HBRUSH)0x0B);
 		//0x01 0x0B 0x0C light grey
 		//0x02 0x0A black
 		//0x03 light blue
@@ -319,56 +331,89 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//0x07 brown grey
 		//0x08 black
 		//0x09 black
-		char valueeeee[6];
+		wchar_t valueeeee[4];
 		//0x0E blue
 		//0x0F white
-		_itoa_s(172, valueeeee, 5, 10);
-		DrawTextA(hdc, valueeeee, 5, &ps.rcPaint, DT_LEFT);
-		FillRect(hdc, &pedal, brush);
-		FillRect(hdc, &roundDot, brush);
-		for (int row = 0; row < ROWS; row++) {
-			for (int column = 0; column < COLUMNS; column++) {
-				if (bricks[row][column].collision)
-					switch (column) {
+		_itow_s(score, valueeeee, 4, 10);
+		HFONT hFont = CreateFont(26, 10, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_RASTER_PRECIS,
+			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH, TEXT("Courier"));
+		SelectObject(hdc, hFont);
+		//Sets the coordinates for the rectangle in which the text is to be formatted.
+		//colorref 0x00rrggbb
+		
+		SetBkColor(hdc, 0x00B4B4B4);
+		SetTextColor(hdc, 0x00202020);
+		DrawText(hdc, valueeeee, -1, &scoreBox, DT_RIGHT);
+		//DrawTextA(hdc, valueeeee, -1, &scoreBox, DT_CENTER);
+		FillRect(hdc, &pedal, (HBRUSH)0x0B);
+		FillRect(hdc, &roundDot, (HBRUSH)0x0B);
+		for (int column = 0; column < COLUMNS; column++)
+			for (int row = 0; row < ROWS; row++)
+				if (bricks[column][row].collision)
+					switch (row) {
 					case 1: //orange
-						FillRect(hdc, &bricks[row][column].coord, orange);
+						FillRect(hdc, &bricks[column][row].coord, orange);
 						break;
 					case 2: //yellow
-						FillRect(hdc, &bricks[row][column].coord, yellow);
+						FillRect(hdc, &bricks[column][row].coord, beige);
 						break;
 					case 3: //green
-						FillRect(hdc, &bricks[row][column].coord, green);
+						FillRect(hdc, &bricks[column][row].coord, yellow);
 						break;
 					case 4: //blue
-						FillRect(hdc, &bricks[row][column].coord, blue);
+						FillRect(hdc, &bricks[column][row].coord, green);
 						break;
 					case 5: //purple
-						FillRect(hdc, &bricks[row][column].coord, purple);
+						FillRect(hdc, &bricks[column][row].coord, blue);
 						break;
 					case 6: //indigo
-						FillRect(hdc, &bricks[row][column].coord, indigo);
+						FillRect(hdc, &bricks[column][row].coord, indigo);
 						break;
-					case 7: //white
-						FillRect(hdc, &bricks[row][column].coord, white);
-						break;
+						//case 7: //white
+							//FillRect(hdc, &bricks[column][row].coord, white);
+							//break;
 					default: //red
-						FillRect(hdc, &bricks[row][column].coord, red);
+						FillRect(hdc, &bricks[column][row].coord, red);
 					}
-			}
-		}
+
+
 		DeleteDC(hdc);
-		DeleteObject(brush);
+		DeleteObject(backg);
 		DeleteObject(red);
 		DeleteObject(orange);
 		DeleteObject(yellow);
 		DeleteObject(green);
 		DeleteObject(blue);
-		DeleteObject(purple);
+		DeleteObject(beige);
 		DeleteObject(indigo);
-		DeleteObject(white);
+		DeleteObject(hFont);
 		EndPaint(hWnd, &ps);
 	}
 	break;
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case 0x41:
+		case VK_LEFT:
+			STDKey.left = true;
+			break;
+		case 0x44:
+		case VK_RIGHT:
+			STDKey.right = true;
+			break;
+		}
+		return 0;
+	case WM_KEYUP:
+		switch (wParam) {
+		case 0x41:
+		case VK_LEFT:
+			STDKey.left = false;
+			break;
+		case 0x44:
+		case VK_RIGHT:
+			STDKey.right = false;
+			break;
+		}
+		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		running = false;
@@ -383,14 +428,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
 		return (INT_PTR)TRUE;
 
 	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
+		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
 			EndDialog(hDlg, LOWORD(wParam));
 			return (INT_PTR)TRUE;
 		}

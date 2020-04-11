@@ -19,20 +19,27 @@ WCHAR windowClassName[maxStringLength];
 bool running;
 bool Demo;
 bool SingleUser;
-HBRUSH brush;
 HINSTANCE hInst;
 bool framePassed = false;
 unsigned int nextFrameStart;
 HMENU hmenu;
+MENUITEMINFO menuDemo;
+MENUITEMINFO menuOneP;
 
+struct keystate {
+	bool keyS;
+	bool keyW;
+	bool up;
+	bool down;
+};
+keystate STDKey;
 //function identifier
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK Control(HWND, UINT, WPARAM, LPARAM);
-int WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ int);
-//don't worry about inconsistent annotation. It's custom-made, after all.
-constexpr bool isKeyDown(SHORT);
+int APIENTRY wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ int);
+//constexpr bool isKeyDown(SHORT);
 int rangedRand(int, int);
 int main(HWND);
 int setup(HWND);
@@ -58,8 +65,6 @@ int APIENTRY wWinMain(
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ PWSTR    pCmdLine,
 	_In_ int       nCmdShow)
-
-
 	//int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow)
 {
 	//initialize global strings.
@@ -95,12 +100,10 @@ int APIENTRY wWinMain(
 	wcex.lpszClassName = windowClassName;
 	//EXW type windows class supports additional icon!
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PONG));
-
 	//registers the windows class. Similarly, we are using the ExW variation.
 	RegisterClassExW(&wcex);
 
-	// Create the window.
-	//again, ExW window class.
+	// Create the window. Again, ExW window class.
 	HWND hWnd = CreateWindowExW(
 		0,															// Optional window styles.
 		windowClassName,													// Window class
@@ -116,14 +119,16 @@ int APIENTRY wWinMain(
 	);
 	//if window handle is unable to created (crash!!!)
 	if (!hWnd)
-		return 2;
+		return -2;
+
+	//set the menu handle and initialize certain things
+	hmenu = GetMenu(hWnd);
+	menuDemo.fMask = MIIM_STATE;
+	menuOneP.fMask = MIIM_STATE;
+	menuDemo.cbSize = sizeof(MENUITEMINFO);
+	menuOneP.cbSize = sizeof(MENUITEMINFO);
 	//draw the window.
 	ShowWindow(hWnd, nCmdShow);
-
-	
-	hmenu = GetMenu(hWnd);
-	
-
 	//runs setup once
 	setup(hWnd);
 
@@ -168,7 +173,7 @@ bool nextFrame(unsigned int rate) {
 
 int setup(HWND hWnd)
 {
-	//set the location of the square
+	//set the location of the pedals
 	pPedal.left = 10;
 	pPedal.top = 0;
 	pPedal.bottom = pPedal.top + pLength;
@@ -177,19 +182,20 @@ int setup(HWND hWnd)
 	cPedal.top = 0;
 	cPedal.bottom = cPedal.top + pLength;
 	cPedal.right = cPedal.left + pWidth;
+	//set the location of the ball
 	roundDot.top = 150;
 	roundDot.left = 200;
 	roundDot.bottom = roundDot.top + ballSize;
 	roundDot.right = roundDot.left + ballSize;
 	roundDotvx = 8;
 	roundDotvy = 0;
+	//set initial condition of the controls
 	Demo = false;
 	SingleUser = true;
-	//SetRect(&pPedal, coord[0], coord[1], pWidth + coord[0], pLength + coord[1]);
-	//food[0] = 50;
-	//food[1] = 50;
-	//give the square a initial brush
-	brush = CreateSolidBrush(RGB(75, 75, 75));
+	
+	
+
+
 	running = true;
 	//return to signal completion
 	return 0;
@@ -205,19 +211,7 @@ int main(HWND hWnd)
 		roundDot.bottom = roundDot.top + ballSize;
 		roundDot.right = roundDot.left + ballSize;
 		InvalidateRect(hWnd, &roundDot, TRUE);
-		if (isKeyDown(GetAsyncKeyState(0x57)) && (pPedal.top > 0) && !Demo) {
-			InvalidateRect(hWnd, &pPedal, TRUE);
-			pPedal.top = pPedal.top - 4;
-			pPedal.bottom = pPedal.bottom - 4;
-			InvalidateRect(hWnd, &pPedal, TRUE);
-		}
 
-		if (isKeyDown(GetAsyncKeyState(VK_UP)) && (cPedal.top > 0) && !SingleUser) {
-			InvalidateRect(hWnd, &cPedal, TRUE);
-			cPedal.top = cPedal.top - 4;
-			cPedal.bottom = cPedal.bottom - 4;
-			InvalidateRect(hWnd, &cPedal, TRUE);
-		}
 		if (Demo) {
 			if (pPedal.top > roundDot.top) {
 				InvalidateRect(hWnd, &pPedal, TRUE);
@@ -232,24 +226,23 @@ int main(HWND hWnd)
 				InvalidateRect(hWnd, &pPedal, TRUE);
 			}
 		}
-		
+		else {
+			if (STDKey.down && (pPedal.bottom < winHeight)) {
+				InvalidateRect(hWnd, &pPedal, TRUE);
+				pPedal.top = pPedal.top + 4;
+				pPedal.bottom = pPedal.bottom + 4;
+				InvalidateRect(hWnd, &pPedal, TRUE);
+			}
+			if (STDKey.up && (pPedal.top > 0)) {
+				InvalidateRect(hWnd, &pPedal, TRUE);
+				pPedal.top = pPedal.top - 4;
+				pPedal.bottom = pPedal.bottom - 4;
+				InvalidateRect(hWnd, &pPedal, TRUE);
+			}
+		}
 		//W
 		//if ((isKeyDown(GetAsyncKeyState(0x41)) || isKeyDown(GetAsyncKeyState(VK_LEFT))) && (coord[0] > 0))
 		//	coord[0] = coord[0] - 4;//A
-		if (isKeyDown(GetAsyncKeyState(0x53)) && (pPedal.bottom < winHeight) && !Demo)
-		{
-			InvalidateRect(hWnd, &pPedal, TRUE);
-			pPedal.top = pPedal.top + 4;
-			pPedal.bottom = pPedal.bottom + 4;
-			InvalidateRect(hWnd, &pPedal, TRUE);
-		}
-		if (isKeyDown(GetAsyncKeyState(VK_DOWN)) && (cPedal.bottom < winHeight) && !SingleUser)
-		{
-			InvalidateRect(hWnd, &cPedal, TRUE);
-			cPedal.top = cPedal.top + 4;
-			cPedal.bottom = cPedal.bottom + 4;
-			InvalidateRect(hWnd, &cPedal, TRUE);
-		}
 		if (SingleUser) {
 			if (cPedal.top > roundDot.top) {
 				InvalidateRect(hWnd, &cPedal, TRUE);
@@ -264,7 +257,21 @@ int main(HWND hWnd)
 				InvalidateRect(hWnd, &cPedal, TRUE);
 			}
 		}
-		
+		else {
+			if (STDKey.keyW && (cPedal.top > 0)) {
+				InvalidateRect(hWnd, &cPedal, TRUE);
+				cPedal.top = cPedal.top - 4;
+				cPedal.bottom = cPedal.bottom - 4;
+				InvalidateRect(hWnd, &cPedal, TRUE);
+			}
+			if (STDKey.keyS && (cPedal.bottom < winHeight)) {
+				InvalidateRect(hWnd, &cPedal, TRUE);
+				cPedal.top = cPedal.top + 4;
+				cPedal.bottom = cPedal.bottom + 4;
+				InvalidateRect(hWnd, &cPedal, TRUE);
+			}
+		}
+
 		if (roundDot.left < 0) {
 			roundDotvx = -roundDotvx;
 			roundDot.left = 0;
@@ -286,15 +293,15 @@ int main(HWND hWnd)
 			roundDot.top = roundDot.bottom - ballSize;
 		}
 		if (roundDot.left < pPedal.right && roundDot.top < pPedal.bottom && roundDot.bottom > pPedal.top) {
-			roundDotvx = -roundDotvx;
+			roundDotvx = 8;
 			roundDotvy = roundDotvy + float(roundDot.top - pPedal.top - pLength / 2) / 4;
 		}
-		if (roundDot.right > cPedal.left&& roundDot.top < cPedal.bottom && roundDot.bottom > cPedal.top) {
-			roundDotvx = -roundDotvx;
+		if (roundDot.right > cPedal.left && roundDot.top < cPedal.bottom && roundDot.bottom > cPedal.top) {
+			roundDotvx = -8;
 			roundDotvy = roundDotvy + float(roundDot.top - cPedal.top - pLength / 2) / 4;
 		}
-		if (roundDotvy > 12) roundDotvy = roundDotvy = 12;
-		if (roundDotvy < -12) roundDotvy = roundDotvy = -12;
+		if (roundDotvy > 12) roundDotvy = roundDotvy = 10;
+		if (roundDotvy < -12) roundDotvy = roundDotvy = -10;
 
 		//S
 	//if ((isKeyDown(GetAsyncKeyState(0x44)) || isKeyDown(GetAsyncKeyState(VK_RIGHT))) && (coord[0] < (winWidth - sqrSize)))
@@ -303,12 +310,12 @@ int main(HWND hWnd)
 		return 0;
 	}
 }
-
+/*
 constexpr bool isKeyDown(
 	SHORT keyState) {
 	return ((keyState & 0x8000) != 0);
 }
-
+*/
 //int rangedRand(int min, int max)
 //{
 //	int u = (int)((double)rand() / (RAND_MAX + 1) * (max - min)) + min;
@@ -328,15 +335,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 		//from the menu selections, the WM_COMMAND is sent
 	case WM_COMMAND: {
-		
 		//GetMenuItemInfo(HMENU, UINT, fByPosition, LPMENUITEMINFOW);
 		int wmId = LOWORD(wParam);
-		MENUITEMINFO menuDemo = { 0 };
-		MENUITEMINFO menuOneP = { 0 };
-		menuDemo.fMask = MIIM_STATE;
-		menuOneP.fMask = MIIM_STATE;
-		menuDemo.cbSize = sizeof(MENUITEMINFO);
-		menuOneP.cbSize = sizeof(MENUITEMINFO);
+		
 		// Parse the menu selections:
 		switch (wmId) {
 		case IDM_ABOUT:
@@ -355,9 +356,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				menuOneP.fState = MFS_CHECKED;
 				SingleUser = true;
 			}
-			
-			SetMenuItemInfo(hmenu, IDM_ONEPLAYER, FALSE, &menuOneP);
-		break;
+			SetMenuItemInfo(hmenu, IDM_ONEPLAYER, false, &menuOneP);
+			break;
 		case IDM_DEMO:
 			GetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
 			if (menuDemo.fState == MFS_CHECKED) {
@@ -368,7 +368,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				menuDemo.fState = MFS_CHECKED;
 				Demo = true;
 			}
-			SetMenuItemInfo(hmenu, IDM_DEMO, FALSE, &menuDemo);
+			SetMenuItemInfo(hmenu, IDM_DEMO, false, &menuDemo);
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
@@ -377,7 +377,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 	}
-		return 0;
+				return 0;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
 		running = false;
@@ -393,14 +393,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HDC hdc = BeginPaint(hWnd, &ps);
 		//create a "brush" to paint stuff
 		//the background
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)6);
+		FillRect(hdc, &ps.rcPaint, (HBRUSH)0x05);
 		//all right. We need to do this trick here
 		//first, we need to create the objects and store it in RAM
 		//then we refer to these objects when we are going to use it
 		//and then, af ter we are done with them, we DESTROY THEM!
 		//no more handle leaks.
 		HBRUSH brush1 = CreateSolidBrush(RGB(75, 75, 75));
-		HBRUSH brush2 = CreateSolidBrush(RGB(0, 200, 200));
+		HBRUSH brush2 = CreateSolidBrush(RGB(0, 225, 225));
 		FillRect(hdc, &pPedal, brush1);
 		FillRect(hdc, &cPedal, brush1);
 		FillRect(hdc, &roundDot, brush2);
@@ -415,6 +415,38 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				 return 0;
 				 //case WM_LBUTTONUP:
 	case WM_MOUSEACTIVATE:
+		return 0;
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case 0x57:
+			STDKey.keyW = true;
+			break;
+		case VK_UP:
+			STDKey.up = true;
+			break;
+		case 0x53:
+			STDKey.keyS = true;
+			break;
+		case VK_DOWN:
+			STDKey.down = true;
+			break;
+		}
+		return 0;
+	case WM_KEYUP:
+		switch (wParam) {
+		case 0x57:
+			STDKey.keyW = false;
+			break;
+		case VK_UP:
+			STDKey.up = false;
+			break;
+		case 0x53:
+			STDKey.keyS = false;
+			break;
+		case VK_DOWN:
+			STDKey.down = false;
+			break;
+		}
 		return 0;
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);

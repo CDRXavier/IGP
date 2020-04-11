@@ -7,7 +7,7 @@
 constexpr int winHeight = 200;
 constexpr int winWidth = 200;
 constexpr int sqrSize = 20;
-
+#define stepSize 4
 //define glocal strings
 constexpr int maxStringLength = 100;
 WCHAR titleString[maxStringLength];
@@ -16,16 +16,19 @@ WCHAR windowClassName[maxStringLength];
 //global variables
 int mouseX, mouseY;
 RECT square;
-int coord[2];
-//bool keyState[8];
-int food[2];
 RECT roundDot;
 bool running;
-HBRUSH brush;
 HINSTANCE hInst;
 bool framePassed = false;
+COLORREF fillins;
 unsigned int nextFrameStart;
-
+struct keystate {
+	bool left;
+	bool right;
+	bool up;
+	bool down;
+};
+keystate STDKey;
 //function identifier
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -66,8 +69,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
-//	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_IGEP));
-	//pointer to application-definded function called the window procedure.
+	//	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_IGEP));
+		//pointer to application-definded function called the window procedure.
 	wcex.lpfnWndProc = WindowProc;
 	//handle to the application instance.
 	wcex.hInstance = hInstance;
@@ -110,10 +113,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	while (running) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0) {
 			//if (!TranslateAccelerator(msg.hWnd, hAccel, &msg)) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-				if (msg.message == WM_QUIT)
-					running = false;
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+				running = false;
 			//}
 		}
 		main(hWnd);
@@ -148,14 +151,17 @@ bool nextFrame(unsigned int rate) {
 
 int setup(HWND hWnd) {
 	//set the location of the square
-	coord[0] = 20;
-	coord[1] = 20;
-	SetRect(&square, coord[0], coord[1], sqrSize + coord[0], sqrSize + coord[1]);
-	food[0] = 50;
-	food[1] = 50;
+	square.left = 20;
+	square.top = 20;
+	square.right = square.left + sqrSize;
+	square.bottom = square.top + sqrSize;
+	roundDot.left = 50;
+	roundDot.top = 50;
+	roundDot.right = roundDot.left + sqrSize;
+	roundDot.bottom = roundDot.top + sqrSize;
 	//give the square a initial brush
-	brush = CreateSolidBrush(RGB(75, 75, 75));
 	running = true;
+	fillins = 0x00000000;
 	//return to signal completion
 	return 0;
 }
@@ -164,34 +170,48 @@ int main(HWND hWnd)
 	if (nextFrame(30)) {
 		//the nextFrame workes well (in eliminating unnecessary CPU usage), but the higher the framerate the more CPU it uses (doesn't make no sense)
 		//if pumping 60 fps, it will use about 10% of the CPU
-		int oldCoord[2];
-		oldCoord[0] = coord[0];
-		oldCoord[1] = coord[1];
-
-		if ((isKeyDown(GetKeyState(0x57)) || isKeyDown(GetKeyState(VK_UP))) && (coord[1] > 0))
-			coord[1] = coord[1] - 4;//W
-		if ((isKeyDown(GetKeyState(0x41)) || isKeyDown(GetKeyState(VK_LEFT))) && (coord[0] > 0))
-			coord[0] = coord[0] - 4;//A
-		if ((isKeyDown(GetKeyState(0x53)) || isKeyDown(GetKeyState(VK_DOWN))) && (coord[1] < (winHeight - sqrSize)))
-			coord[1] = coord[1] + 4;//S
-		if ((isKeyDown(GetKeyState(0x44)) || isKeyDown(GetKeyState(VK_RIGHT))) && (coord[0] < (winWidth - sqrSize)))
-			coord[0] = coord[0] + 4;//D
-
-		if ((oldCoord[0] != coord[0]) || (oldCoord[1] != coord[1]))
+		int oldCoord[2] = {0,0};
+		if (STDKey.up) {
+			if (square.top > 0) {
+				InvalidateRect(hWnd, &square, true);
+				square.top = square.top - stepSize;
+				square.bottom = square.top + sqrSize;
+			}
+		}
+		if (STDKey.down) {
+			if (square.bottom < winHeight) {
+				InvalidateRect(hWnd, &square, true);
+				square.top = square.top + stepSize;
+				square.bottom = square.top + sqrSize;
+			}
+		}
+		if (STDKey.left) {
+			if (square.left > 0) {
+				InvalidateRect(hWnd, &square, true);
+				square.left = square.left - stepSize;
+				square.right = square.left + sqrSize;
+			}
+		}
+		if (STDKey.right) {
+			if (square.right < winWidth) {
+				InvalidateRect(hWnd, &square, true);
+				square.left = square.left + stepSize;
+				square.right = square.left + sqrSize;
+			}
+		}
+		InvalidateRect(hWnd, &square, true);
+		if ((oldCoord[0] != square.left) || (oldCoord[1] != square.right))
 		{
-			HWND hWnd = GetActiveWindow();
-			InvalidateRect(hWnd, &square, TRUE);
-			SetRect(&square, coord[0], coord[1], coord[0] + sqrSize, coord[1] + sqrSize);
-			InvalidateRect(hWnd, &square, TRUE);
-			if ((abs(coord[0] - food[0]) < 20) && (abs(coord[1] - food[1]) < sqrSize) &&
-				(abs(coord[0] - food[0]) + abs(coord[1] - food[1]) < 1.3 * sqrSize)) {
-				//food[1] = food[1] + 20;
-				food[0] = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
-				food[1] = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
+			//HWND hWnd = GetActiveWindow();
+			if ((abs(square.left - roundDot.left) < 20) && (abs(square.top - roundDot.top) < sqrSize) &&
+				(abs(square.left - roundDot.left) + abs(square.top - roundDot.top) < 1.3 * sqrSize)) {
+				InvalidateRect(hWnd, &roundDot, TRUE);
+				roundDot.left = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
+				roundDot.top = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
+				roundDot.right = roundDot.left + sqrSize;
+				roundDot.bottom = roundDot.top + sqrSize;
 				InvalidateRect(hWnd, &roundDot, TRUE);
 			}
-			SetRect(&roundDot, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
-			InvalidateRect(hWnd, &roundDot, TRUE);
 		}
 		return 0;
 	}
@@ -253,44 +273,89 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HDC hdc = BeginPaint(hWnd, &ps);
 		//create a "brush" to paint stuff
 		//the background
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)6);
+		HBRUSH brush = CreateSolidBrush(fillins);
+		FillRect(hdc, &ps.rcPaint, (HBRUSH)0x05);
 		//the square
 		FillRect(hdc, &square, brush);
 		//the food
-		Ellipse(hdc, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
+		Ellipse(hdc, roundDot.left, roundDot.top, roundDot.right, roundDot.bottom);
+		DeleteObject(brush);
 		EndPaint(hWnd, &ps);
 	}
-				 return 0;
+	return 0;
 	case WM_LBUTTONUP:
+		fillins = 0x00646464;
+		return 0;
 		//case WM_MOUSEACTIVATE:
 	case WM_MOUSEMOVE:
 		mouseX = ((int)(short)LOWORD(lParam));
 		mouseY = ((int)(short)HIWORD(lParam));
 		//tell the system that the rectangle here need to be redrawn
-
-		//compare mouse coordinate with the boarder of the square
-		if (mouseX > coord[0] && mouseX < (sqrSize + coord[0]) && mouseY > coord[1] && mouseY < (sqrSize + coord[1])) {
-			brush = CreateSolidBrush(RGB(75, 75, 75));
+		if (mouseX > square.left && mouseX < square.right && mouseY > square.top && mouseY < square.bottom) {
+			fillins = 0x00484848;
 			InvalidateRect(hWnd, &square, TRUE);
 		}
 		else {
-			brush = CreateSolidBrush(RGB(100, 100, 100));
+			fillins = 0x00646464;
 			InvalidateRect(hWnd, &square, TRUE);
 		}
+		//compare mouse coordinate with the boarder of the square
+		
 		return 0;
 
 	case WM_LBUTTONDOWN:
 		mouseX = ((int)(short)LOWORD(lParam));
 		mouseY = ((int)(short)HIWORD(lParam));
 
-		if (mouseX > coord[0] && mouseX < (sqrSize + coord[0]) && mouseY > coord[1] && mouseY < (sqrSize + coord[1])) {
+		if (mouseX > square.left&& mouseX < square.right && mouseY > square.top&& mouseY < square.bottom) {
 			InvalidateRect(hWnd, &roundDot, TRUE);
-			food[0] = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
-			food[1] = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
-			SetRect(&roundDot, food[0], food[1], food[0] + sqrSize, food[1] + sqrSize);
+			roundDot.left = 4 * rangedRand(0, (winWidth - sqrSize) / 4);
+			roundDot.top = 4 * rangedRand(0, (winHeight - sqrSize) / 4);
+			roundDot.right = roundDot.left + sqrSize;
+			roundDot.bottom = roundDot.top + sqrSize;
 			InvalidateRect(hWnd, &roundDot, TRUE);
 			InvalidateRect(hWnd, &square, TRUE);
-			brush = CreateSolidBrush(RGB(0, 0, 0));
+			fillins = 0x001F1F1F;
+		}
+		return 0;
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case 0x57:
+		case VK_UP:
+			STDKey.up = true;
+			break;
+		case 0x53:
+		case VK_DOWN:
+			STDKey.down = true;
+			break;
+		case 0x41:
+		case VK_LEFT:
+			STDKey.left = true;
+			break;
+		case 0x44:
+		case VK_RIGHT:
+			STDKey.right = true;
+			break;
+		}
+		return 0;
+	case WM_KEYUP:
+		switch (wParam) {
+		case 0x57:
+		case VK_UP:
+			STDKey.up = false;
+			break;
+		case 0x53:
+		case VK_DOWN:
+			STDKey.down = false;
+			break;
+		case 0x41:
+		case VK_LEFT:
+			STDKey.left = false;
+			break;
+		case 0x44:
+		case VK_RIGHT:
+			STDKey.right = false;
+			break;
 		}
 		return 0;
 	}
