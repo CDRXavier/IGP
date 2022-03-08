@@ -1,0 +1,7 @@
+﻿  Blink.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+C:\Users\Xavier\Documents\Visual Studio 2019\Source\IGP\Blink\Blink.cpp(693): warning C4715: 'WindowProc': not all control paths return a value
+  All 9 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Blink.vcxproj -> C:\Users\Xavier\Documents\Visual Studio 2019\Source\IGP\x64\Release\Blink.exe

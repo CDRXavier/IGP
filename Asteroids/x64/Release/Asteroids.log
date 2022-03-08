@@ -1,0 +1,5 @@
+﻿  Microsoft (R) C/C++ Optimizing Compiler Version 19.25.28612 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  cl /c /Zi /W3 /WX- /diagnostics:column /sdl /Ox /Ob0 /Oi /D NDEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy- /fp:strict /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Release\\" /Fd"x64\Release\vc142.pdb" /Gd /TP /FC /errorReport:prompt Asteroids.cpp
+  Asteroids.cpp
+  Asteroids.vcxproj -> C:\Users\Xavier\Documents\Visual Studio 2019\Source\IGP\x64\Release\Asteroids.exe
