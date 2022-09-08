@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Xavier\Documents\Visual Studio 2019\Source\IGP\Phoenix\</FILEPATH>
+      <FILENAME>Phoenix.cpp</FILENAME>
+      <LINE>308</LINE>
+      <COLUMN>66</COLUMN>
+    </SFA>
+    <DEFECTCODE>28159</DEFECTCODE>
+    <DESCRIPTION>Consider using 'GetTickCount64' instead of 'GetTickCount'. Reason: GetTickCount overflows roughly every 49 days.  Code that does not take that into account can loop indefinitely.  GetTickCount64 operates on 64 bit values and does not have that problem</DESCRIPTION>
+    <FUNCTION>nextFrame</FUNCTION>
+    <DECORATED>?nextFrame@@YA_NI@Z</DECORATED>
+    <FUNCLINE>307</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+</DEFECTS>
